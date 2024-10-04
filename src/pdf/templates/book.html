@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ bookSummary.title }}</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+            }
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
+                color: #333;
+                margin: 0%;
+            }
+            h1 {
+                font-size: 72px;
+                margin-bottom: 20px;
+            }
+            p {
+                margin: 0;
+            }
+            h4 {
+                font-size: 20px;
+            }
+            .author-name {
+                width: 100%;
+                text-align: end;
+                font-style: italic;
+            }
+            .book-summary {
+                width: 85%;
+                padding: 40px 0px;
+            }
+            .cover-page,
+            .table-content,
+            .chapter-page {
+                page-break-before: always;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            .table-item {
+                display: flex;
+                gap: 10px;
+                margin: 30px 0px;
+                align-items: center;
+            }
+            .chapter-page {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: 20px;
+            }
+            .chapter-header h2 {
+                font-size: 42px;
+            }
+            .chapter-summary {
+                width: 85%;
+                font-style: italic;
+                padding: 10px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="cover-page">
+            <h1>{{ bookSummary.title }}</h1>
+            <div class="author-name">- {{author}}</div>
+            <p class="book-summary">{{ bookSummary.summary }}</p>
+        </div>
+
+        <div class="table-content">
+            <h2>Chapters</h2>
+            {% for chapter in bookSummary.chapters %}
+            <div class="table-item">
+                <div style="width: 30px">{{ chapter.chapterNo }}.</div>
+                <h4>{{ chapter.chapterName }}</h4>
+                <div style="width: 100px"></div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% for content in bookContent %}
+        <div class="chapter-page">
+            <div class="chapter-header">
+                <div>Chapter {{ content.chapterNo }}</div>
+                <h2>{{ content.chapterName }}</h2>
+                <p class="chapter-summary">
+                    {{ bookSummary.chapters[content.chapterNo -
+                    1].chapterSummary }}
+                </p>
+            </div>
+            {% for paragraph in content.chapterContent %}
+            <p>{{ paragraph }}</p>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </body>
+</html>
