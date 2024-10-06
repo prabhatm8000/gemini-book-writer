@@ -8,6 +8,5 @@ app.register_blueprint(api, url_prefix="/api")
 def hello_world():
     return render_template("index.html")
 
-
 if __name__ == "__main__":
     app.run(debug=True)
