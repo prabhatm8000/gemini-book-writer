@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='styles/index.css') }}"
+        />
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap");
+            * {
+                font-family: "Nunito", sans-serif;
+                font-size: 16px;
+                scroll-behavior: smooth;
+            }
+            ::-webkit-scrollbar {
+                width: 4px;
+                /* height: 4px; */
+            }
+            ::-webkit-scrollbar-track {
+                background: #131313;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #444;
+                border-radius: 10px;
+            }
+            body {
+                color: #fff;
+                background-color: #131313;
+                /* width: 100vw; */
+                height: 100vh;
+                margin: 0;
+            }
+            nav {
+                padding: 15px 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            nav h1 {
+                font-size: 38px;
+                margin: 0;
+            }
+            nav div {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+                padding: 0px 20px;
+            }
+            a {
+                color: #fff;
+                text-decoration: none;
+            }
+            h3 {
+                margin: 0;
+            }
+            #content {
+                display: grid;
+                grid-template-columns: 0.5fr 0.75fr 1fr;
+                width: calc(100vw - 20px);
+                margin: 0 10px;
+                height: calc(100vh - 81px - 20px);
+                gap: 10px;
+            }
+            .content-container {
+                width: calc(100% - 20px);
+                height: calc(100% - 10px);
+                background-color: #222;
+                border-radius: 7.5px;
+                padding: 10px;
+                display: grid;
+                gap: 10px;
+            }
+            #generate-idea-container {
+                grid-template-rows: 0.05fr auto 1fr;
+            }
+            #generate-book-container {
+                grid-template-rows: 0.05fr auto 1fr;
+            }
+            #output-container {
+                grid-template-rows: 0.05fr auto 1fr;
+            }
+            @media screen and (max-width: 800px) {
+                #content {
+                    width: calc(100vw - 60px);
+                    height: calc(200vh - 81px - 20px);
+                    gap: 20px;
+                    grid-template-columns: 1fr;
+                    grid-template-rows: 1fr 1fr 1fr;
+                    padding-bottom: 20px;
+                }
+                #generate-idea-container,
+                #generate-book-container,
+                #output-container {
+                    grid-column: span 3;
+                }
+            }
+            @media screen and (max-width: 1200px) {
+                #content {
+                    width: calc(100vw - 60px);
+                    height: calc(200vh - 81px - 20px);
+                    gap: 20px;
+                    grid-template-columns: 1fr 1fr;
+                    grid-template-rows: 1fr 1fr;
+                    padding-bottom: 20px;
+                }
+                #generate-idea-container,
+                #generate-book-container {
+                    grid-column: span 1;
+                }
+                #output-container {
+                    grid-column: span 2;
+                }
+            }
+            .btn1 {
+                border: none;
+                border-radius: 5px;
+                padding: 10px 20px;
+                background-color: #333;
+                color: #fff;
+                font-weight: 600;
+                cursor: pointer;
+            }
+            .btn1:hover {
+                background-color: #4c4c4c;
+            }
+            .btn1:focus {
+                outline: none;
+            }
+            .inp1 {
+                border: none;
+                border-radius: 5px;
+                padding: 10px 10px;
+                background-color: #131313;
+                color: #fff;
+                font-weight: 600;
+                cursor: text;
+            }
+            .inp1:focus {
+                outline: none;
+            }
+            .inp1::placeholder {
+                color: #aaa;
+            }
+            #generate-idea-form {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 1fr 0.3fr;
+                gap: 10px;
+                width: 100%;
+                height: 100%;
+            }
+            #generate-idea-form textarea {
+                grid-column: span 2;
+                resize: none;
+            }
+            #generate-book-form {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 0.5fr 1fr 0.5fr 0.5fr;
+                gap: 10px;
+                width: 100%;
+                height: 100%;
+            }
+            #generate-book-form #genre {
+                grid-column: span 2;
+            }
+            #generate-book-form textarea {
+                grid-column: span 2;
+                resize: none;
+            }
+            #generated-ideas,
+            #generated-chapters,
+            #output {
+                padding: 5px 10px;
+                width: calc(100% - 20px);
+                height: calc(100% - 10px);
+                overflow-y: scroll;
+                background-color: #131313;
+                border-radius: 10px 0 0 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <nav>
+                <h1>Gemini Book Writer</h1>
+                <div>
+                    <a
+                        href="https://github.com/prabhatm8000/gemini-book-writer"
+                        target="_blank"
+                        >Github</a
+                    >
+                    <a href="./readme.md">How to use?</a>
+                </div>
+            </nav>
+
+            <div id="content">
+                <div class="content-container" id="generate-idea-container">
+                    <h3>0. Generate ideas for your book</h3>
+                    <div>
+                        <form id="generate-idea-form">
+                            <textarea
+                                title="Prompt for ideas"
+                                class="inp1"
+                                type="text"
+                                name="prompt"
+                                id="prompt"
+                                placeholder="Enter prompt"
+                            ></textarea>
+                            <input
+                                title="Number of ideas"
+                                class="inp1"
+                                type="number"
+                                name="limit"
+                                id="limit"
+                                placeholder="Enter limit"
+                                min="1"
+                                max="10"
+                            />
+                            <input
+                                class="btn1"
+                                type="submit"
+                                value="Generate Ideas"
+                                id="generate-idea"
+                            />
+                        </form>
+                    </div>
+                    <div id="generated-ideas">waiting for request...</div>
+                </div>
+                <div class="content-container" id="generate-book-container">
+                    <h3>1. Generate a book with your ideas</h3>
+                    <div>
+                        <form id="generate-book-form">
+                            <input
+                                title="Title of the book"
+                                class="inp1"
+                                type="text"
+                                name="title"
+                                id="title"
+                                placeholder="Enter title"
+                            />
+                            <select name="style" id="style" class="inp1">
+                                <option value="">Select style</option>
+                                <option value="persuasive">Persuasive</option>
+                                <option value="narrative">Narrative</option>
+                                <option value="expository">Expository</option>
+                                <option value="descriptive">Descriptive</option>
+                            </select>
+                            <textarea
+                                title="Description of the book"
+                                class="inp1"
+                                type="text"
+                                name="description"
+                                id="description"
+                                placeholder="Enter description"
+                                maxlength="480"
+                            ></textarea>
+                            <input
+                                title="Genre of the book"
+                                class="inp1"
+                                type="text"
+                                name="genre"
+                                id="genre"
+                                placeholder="Enter genre followed by comma"
+                            />
+                            <input
+                                title="Number of chapters"
+                                class="inp1"
+                                type="number"
+                                name="chapters"
+                                id="chapters"
+                                placeholder="Enter number of chapters"
+                                min="1"
+                                max="25"
+                            />
+                            <input
+                                title="Creativity of the book"
+                                class="inp1"
+                                type="number"
+                                name="creativity"
+                                id="creativity"
+                                placeholder="Enter creativity level out of 10"
+                                min="-10"
+                                max="10"
+                            />
+                            <input
+                                title="Logic of the book"
+                                class="inp1"
+                                type="number"
+                                name="logic"
+                                id="logic"
+                                placeholder="Enter logic level out of 10"
+                                min="-10"
+                                max="10"
+                            />
+                            <input
+                                class="btn1"
+                                type="submit"
+                                value="Generate chapters"
+                                id="generate-idea"
+                            />
+                        </form>
+                    </div>
+                    <div id="generated-chapters">waiting for request...</div>
+                </div>
+                <div class="content-container" id="output-container">
+                    <h3>2. Output</h3>
+                    <div>
+                        <button class="btn1">JSON</button>
+                        <button class="btn1">Book</button>
+                        <button class="btn1">Generate PDF</button>
+                    </div>
+                    <div id="output">waiting for request...</div>
+                </div>
+            </div>
+        </div>
+        <script src="{{ url_for('static', filename='scripts/index.js') }}"></script>
+    </body>
+</html>
