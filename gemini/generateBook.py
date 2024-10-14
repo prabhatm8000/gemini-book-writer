@@ -1,8 +1,8 @@
 from dotenv.main import load_dotenv
 import os
 import google.generativeai as genai
-from chatHistory import generateBookWithParamsHistory, generateBookIdeasWithParamsHistory
-from utils import geminiResponseToJson, logger
+from gemini.chatHistory import generateBookWithParamsHistory, generateBookIdeasWithParamsHistory
+from gemini.utils import geminiResponseToJson, logger
 import time
 
 load_dotenv()
@@ -64,14 +64,14 @@ class GenerateBookWithParams:
         logic -> out of 10 can be negative, possibility of it can be true or can happen in real life. \n
     """
 
-    def __init__(self, title: str, description: str, genre: str, style: str, chapters: int, creativity: int, logic: int):
-        self.title = title
-        self.description = description
-        self.genre = genre
-        self.style = style
-        self.chapters = chapters
-        self.creativity = creativity
-        self.logic = logic
+    def __init__(self):
+        self.title = None
+        self.description = None
+        self.genre = None
+        self.style = None
+        self.chapters = None
+        self.creativity = None
+        self.logic = None
 
         self.checkParams()
         self.modelName = "gemini-1.5-flash"
@@ -110,11 +110,17 @@ class GenerateBookWithParams:
         if (self.logic < 0 or self.logic > 10):
             raise ValueError("logic must be between 0 and 10")
 
-    def generateBookSummary(self) -> dict:
+    def generateBookSummary(self, title: str, description: str, genre: str, style: str, chapters: int, creativity: int, logic: int) -> dict:
         """
         Returns the generated book summary.
         """
-        # style: persuasive, narrative, expository, and descriptive
+        self.title = title
+        self.description = description
+        self.genre = genre
+        self.style = style
+        self.chapters = chapters
+        self.creativity = creativity
+        self.logic = logic
 
         response = self.chat.send_message(f"""
             {{
