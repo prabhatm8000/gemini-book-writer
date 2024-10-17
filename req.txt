@@ -1,6 +1,6 @@
 python-dotenv
 google-generativeai
-json
-re
 Jinja2
 fpdf2
+flask
+Flask-Cors

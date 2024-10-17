@@ -73,7 +73,6 @@ class GenerateBookWithParams:
         self.creativity = None
         self.logic = None
 
-        self.checkParams()
         self.modelName = "gemini-1.5-flash"
 
         self.model = genai.GenerativeModel(
@@ -121,6 +120,8 @@ class GenerateBookWithParams:
         self.chapters = chapters
         self.creativity = creativity
         self.logic = logic
+
+        self.checkParams()
 
         response = self.chat.send_message(f"""
             {{

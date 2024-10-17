@@ -27,10 +27,10 @@ def generate_book_ideas():
     except APIError as e:
         return jsonify({"message": e.message}), e.status
 
-@api.route('/genrate-book-chapter', methods=['POST'])
-def generate_book_chapter():
+@api.route('/generate-book-summary', methods=['POST'])
+def generate_book_summary():
     try:
-        [res, status] = controller.generate_book_chapter_controller(request)
+        [res, status] = controller.generate_book_summary_controller(request)
         return jsonify(res), status
 
     except APIError as e:

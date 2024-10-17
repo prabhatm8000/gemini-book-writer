@@ -1,0 +1,271 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap");
+
+* {
+    font-family: "Nunito", sans-serif;
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+    /* height: 4px; */
+}
+
+::-webkit-scrollbar-track {
+    background: #131313;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 10px;
+}
+
+body {
+    color: #fff;
+    background-color: #131313;
+    /* width: 100vw; */
+    height: 100vh;
+    margin: 0;
+}
+
+nav {
+    padding: 15px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+nav h1 {
+    font-size: 38px;
+    margin: 0;
+}
+
+nav div {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0px 20px;
+}
+
+a {
+    color: #fff;
+    text-decoration: none;
+}
+
+h3,
+p {
+    margin: 0;
+}
+
+#content {
+    display: grid;
+    grid-template-columns: 0.5fr 0.75fr 1fr;
+    width: calc(100vw - 20px);
+    margin: 0 10px;
+    height: calc(100vh - 81px - 20px);
+    gap: 10px;
+}
+
+.content-container {
+    width: calc(100% - 20px);
+    height: calc(100% - 10px);
+    background-color: #222;
+    border-radius: 7.5px;
+    padding: 10px;
+    display: grid;
+    gap: 10px;
+    overflow-y: hidden;
+}
+
+.content-container .btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+#generate-idea-container {
+    grid-template-rows: 0.05fr auto 1fr;
+}
+
+#generate-book-container {
+    grid-template-rows: 0.05fr auto 1fr;
+}
+
+#output-container {
+    grid-template-rows: 0.05fr auto 1fr;
+}
+
+@media screen and (max-width: 800px) {
+    #content {
+        width: calc(100vw - 60px);
+        height: calc(200vh - 81px - 20px);
+        gap: 20px;
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr 1fr;
+        padding-bottom: 20px;
+    }
+
+    #generate-idea-container,
+    #generate-book-container,
+    #output-container {
+        grid-column: span 3;
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    #content {
+        width: calc(100vw - 60px);
+        height: calc(200vh - 81px - 20px);
+        gap: 20px;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        padding-bottom: 20px;
+    }
+
+    #generate-idea-container,
+    #generate-book-container {
+        grid-column: span 1;
+    }
+
+    #output-container {
+        grid-column: span 2;
+    }
+}
+
+.btn1 {
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn1:hover {
+    background-color: #4c4c4c;
+}
+
+.btn1:focus {
+    outline: none;
+}
+
+.btn1:disabled {
+    background-color: #4c4c4c;
+    cursor: not-allowed;
+}
+
+.inp1 {
+    border: none;
+    border-radius: 5px;
+    padding: 10px 10px;
+    background-color: #131313;
+    color: #fff;
+    font-weight: 600;
+    cursor: text;
+}
+
+.inp1:focus {
+    outline: none;
+}
+
+.inp1::placeholder {
+    color: #aaa;
+}
+
+#generate-idea-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 0.3fr;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+}
+
+#generate-idea-form textarea {
+    grid-column: span 2;
+    resize: none;
+}
+
+#generate-book-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 0.5fr 1fr 0.5fr 0.5fr;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+}
+
+#generate-book-form #genre {
+    grid-column: span 2;
+}
+
+#generate-book-form textarea {
+    grid-column: span 2;
+    resize: none;
+}
+
+#generated-ideas,
+#generated-summary,
+#output {
+    padding: 5px 10px;
+    width: calc(100% - 20px);
+    height: calc(100% - 10px);
+    overflow: scroll;
+    background-color: #131313;
+    border-radius: 10px 0 0 10px;
+    color: #fff;
+}
+
+.error {
+    color: red;
+}
+
+.idea-card {
+    width: 100%;
+    display: flex;
+    gap: 6px;
+    padding: 20px 0;
+    border-bottom: 1px solid #333;
+}
+
+.idea-card div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.idea-card div div {
+    display: flex;
+    gap: 1px;
+}
+
+.light-text {
+    color: #999;
+}
+
+#generated-summary {
+    position: relative;
+}
+
+#generated-summary h2 {
+    margin: 10px 0;
+    font-size: x-large;
+}
+
+#generated-summary .summary {
+    display: flex;
+    flex-direction: column;
+    /* gap: 6px; */
+}
+
+#generated-summary .chapters,
+#generated-summary .chapters div {
+    padding: 20px 0;
+}
+
+.generate-book-btn {
+    position: sticky;
+    width: 100%;
+    right: 0;
+    bottom: 0;
+}

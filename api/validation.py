@@ -10,7 +10,7 @@ def generate_book_ideas_controller_validation(payload) -> dict:
     if ("limit" not in payload):
         raise APIError("Missing limit", 400)
 
-def generate_book_chapter_controller_validation(payload) -> dict:
+def generate_book_summary_controller_validation(payload) -> dict:
     if (payload is None):
         raise APIError("Invalid JSON", 400)
     

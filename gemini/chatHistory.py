@@ -93,7 +93,7 @@ I am thinking of writing a book, I need ideas for that. so act like a profession
 I'll be sending you a json object with prompt and noOfIdeas as a property, which that you generate ideas and respond me with a json object containing property ideas which is an array of ideas with the following properties:
 - title: The title of the book
 - description: A short description about the how the book will be, or we can say the on what the book is based on
-- genre: array of genres, defines the book genre
+- genre: array of genres, like, comedy, thriller, romance
 - style: defines the writing style can be equal to: persuasive, narrative, expository, descriptive
 """
     },
