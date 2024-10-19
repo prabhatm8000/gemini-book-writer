@@ -14,6 +14,7 @@ config = genai.types.GenerationConfig(
     temperature=1,
 )
 
+MODEL = "gemini-1.5-flash"
 
 class GenerateBookIdeasWithParams:
     """
@@ -21,7 +22,7 @@ class GenerateBookIdeasWithParams:
     """
 
     def __init__(self):
-        self.modelName = "gemini-1.5-flash"
+        self.modelName = MODEL
 
         self.model = genai.GenerativeModel(
             self.modelName, generation_config=config)
@@ -73,7 +74,7 @@ class GenerateBookWithParams:
         self.creativity = None
         self.logic = None
 
-        self.modelName = "gemini-1.5-flash"
+        self.modelName = MODEL
 
         self.model = genai.GenerativeModel(
             self.modelName, generation_config=config)
@@ -158,6 +159,11 @@ class GenerateBookWithParams:
             raise ValueError(
                 "paragraphSize must be 'brief', 'long', or 'very-long'")
 
+        try:
+            self.checkParams()
+        except Exception as e:
+            raise Exception("generateBookSummary must be called first")
+
         retryCount = 0
         lastError = None
         while True:
@@ -194,6 +200,14 @@ class GenerateBookWithParams:
         Returns the generated book content.
         """
 
+        try:
+            self.checkParams()
+        except Exception as e:
+            raise Exception("generateBookSummary must be called first")
+
+        if (self.bookSummary == None):
+            raise Exception("generateBookSummary must be called first")
+
         bookContent: dict[str, str | list] = {
             "bookSummary": self.bookSummary, "bookContent": [], "author": f"gemini ({self.modelName})"}
 
@@ -202,7 +216,7 @@ class GenerateBookWithParams:
                 chapterIndex, estimatedParagraph, paragraphSize)
             bookContent["bookContent"].append(chapter)
 
-            yield [chapterIndex, chapter]
+            yield chapter
 
         # return bookContent
 

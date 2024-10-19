@@ -1,6 +1,6 @@
 import React from 'react'
 
-const BookSummary = ({ bookSummary }) => {
+const BookSummary = ({ bookSummary, handleGenerateFullBook }) => {
     return (
         <>
             <h2>{bookSummary?.title}</h2>
@@ -37,7 +37,7 @@ const BookSummary = ({ bookSummary }) => {
                 ))}
             </div>
 
-            <button className='btn1 generate-book-btn'>Generate Full Book</button>
+            <button className='btn1 generate-book-btn' onClick={handleGenerateFullBook}>Generate Full Book</button>
         </>
     )
 }

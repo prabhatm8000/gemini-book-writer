@@ -1,13 +1,14 @@
 import React, { useState } from 'react'
 import BookSummary from './BookSummary'
 
-const GenerateSummary = ({ selector, dispatch }) => {
+const styles = ["persuasive", "narrative", "expository", "descriptive"]
+
+const GenerateSummary = ({ selector, dispatch, fetchFullBookChunkedJsonData }) => {
     const [creativity, setCreativity] = useState(7)
     const [logic, setLogic] = useState(7)
     const [noOfChapters, setNoOfChapters] = useState(5)
 
     const [loading, setLoading] = useState(false)
-    const [bookSummary, setBookSummary] = useState(null)
     const [error, setError] = useState(null)
 
     const handleSubmit = async (e) => {
@@ -19,6 +20,7 @@ const GenerateSummary = ({ selector, dispatch }) => {
         const genre = e.target[3].value
 
         if (!title || !style || !genre || !description) {
+            setError('Please fill all the fields')
             return
         }
 
@@ -48,8 +50,12 @@ const GenerateSummary = ({ selector, dispatch }) => {
         } else if (data.error) {
             setError(data.error)
         } else {
-            setBookSummary(data)
+            dispatch({ type: 'setbookSummary', payload: data })
         }
+    }
+
+    const handleGenerateFullBook = () => {
+        fetchFullBookChunkedJsonData()
     }
 
     return (
@@ -76,10 +82,9 @@ const GenerateSummary = ({ selector, dispatch }) => {
                         value={selector?.ideaForSummaryGen?.style || ""}
                     >
                         <option value="">Select style</option>
-                        <option value="persuasive">Persuasive</option>
-                        <option value="narrative">Narrative</option>
-                        <option value="expository">Expository</option>
-                        <option value="descriptive">Descriptive</option>
+                        {styles.map((style) => (
+                            <option key={style} value={style} style={{ textTransform: 'capitalize' }}>{style}</option>
+                        ))}
                     </select>
                     <textarea
                         value={selector?.ideaForSummaryGen?.description || ""}
@@ -145,10 +150,10 @@ const GenerateSummary = ({ selector, dispatch }) => {
                     />
                 </form>
             </div>
-            <div id="generated-summary" className={error ? 'error' : ''}>
+            <div id="generated-summary">
                 {loading && <>waiting for response...</>}
-                {error && <>{error}</>}
-                {bookSummary && <BookSummary bookSummary={bookSummary} />}
+                {error && <p className='error'>{error}</p>}
+                {selector?.bookSummary && <BookSummary bookSummary={selector.bookSummary} handleGenerateFullBook={handleGenerateFullBook} />}
             </div>
         </div>
     )

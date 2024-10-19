@@ -4,6 +4,7 @@ import re
 import os
 from jinja2 import Environment, FileSystemLoader
 
+
 def geminiResponseToJson(text: str) -> dict:
     """
     Converts the gemini response to json.
@@ -30,5 +31,7 @@ def renderBookHtml(book: dict) -> str:
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template('book.html')
     renderedHtml = template.render(book)
-    with open(os.path.dirname(__file__) + "/" + "rendered.html", 'w') as f:
-        f.write(renderedHtml)
+    # with open(os.path.dirname(__file__) + "/" + "rendered.html", 'w') as f:
+    #     f.write(renderedHtml)
+
+    return renderedHtml

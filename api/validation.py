@@ -1,22 +1,24 @@
 from api.errors import APIError
 
-def generate_book_ideas_controller_validation(payload) -> dict:
+
+def generate_book_ideas_controller_validation(payload: dict):
     if (payload is None):
         raise APIError("Invalid JSON", 400)
-    
+
     if ("prompt" not in payload):
         raise APIError("Missing prompt", 400)
 
     if ("limit" not in payload):
         raise APIError("Missing limit", 400)
 
-def generate_book_summary_controller_validation(payload) -> dict:
+
+def generate_book_summary_controller_validation(payload: dict):
     if (payload is None):
         raise APIError("Invalid JSON", 400)
-    
+
     if ("title" not in payload):
         raise APIError("Missing title", 400)
-    
+
     if ("description" not in payload):
         raise APIError("Missing description", 400)
 
@@ -34,3 +36,14 @@ def generate_book_summary_controller_validation(payload) -> dict:
 
     if ("logic" not in payload):
         raise APIError("Missing logic", 400)
+
+
+def generate_pdf_controller_validation(payload: dict):
+    if (payload is None):
+        raise APIError("Invalid JSON", 400)
+
+    if ("bookSummary" not in payload):
+        raise APIError("Book summary missing", 400)
+
+    if ("bookContent" not in payload):
+        raise APIError("Book content missing", 400)
