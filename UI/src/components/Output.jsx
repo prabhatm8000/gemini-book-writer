@@ -6,17 +6,7 @@ const Output = ({ selector, dispatch }) => {
     const [error, setError] = useState(null)
     const iframeRef = useRef();
 
-    const printPdf = () => {
-        const iframe = iframeRef.current;
-
-        // Ensure the iframe is loaded and accessible
-        if (iframe) {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-        }
-    };
-
-    const handleGeneratePdfBtn = async () => {
+    const generatePdf = async () => {
         setView("html")
         setError(null)
 
@@ -36,17 +26,53 @@ const Output = ({ selector, dispatch }) => {
             })
         })
 
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        iframeRef.current.src = url
+    };
+
+    const handleGeneratePdfBtn = async () => {
+        setView("html")
+        setError(null)
+
+        if (selector?.bookSummary === null || selector?.chapters === null) {
+            setError("Please generate summary and content first")
+            return
+        }
+
+        const res = await fetch("http://localhost:5000/api/generate-html", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                bookSummary: selector?.bookSummary,
+                bookContent: selector?.chapters
+            })
+        })
+
         const html = await res.text()
         setHtmlContent(html)
     }
 
-    const handleDownload = (data) => {
+    const handleDownload = (e, type) => {
+        let data;
+        if (type === "book") {
+            data = { bookSummary: selector.bookSummary, chapters: selector.chapters }
+        } else if (type === "metadata") {
+            data = selector.bookSummary
+        }
+
+        if (!data) {
+            return
+        }
+
         const json = JSON.stringify(data, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${document.title}-metadata.json`;
+        link.download = e.target.innerText;
         link.click();
         URL.revokeObjectURL(url);
     };
@@ -61,11 +87,12 @@ const Output = ({ selector, dispatch }) => {
         <div className="content-container" id="output-container">
             <h3>2. Output</h3>
             <div className='btn-group'>
-                <button className="btn1" onClick={() => setView("json")}>JSON</button>
-                <button className="btn1" onClick={() => setView("book")}>Book</button>
-                <button className="btn1" onClick={() => setView("html")}>HTML</button>
-                {htmlContent && <button className="btn1" onClick={printPdf}>Generate PDF</button>}
-                {selector?.bookSummary && <button className="btn1" onClick={() => handleDownload(selector.bookSummary)}>{document.title}-metadata.json</button>}
+                <button className={`btn1 ${view === "json" ? "border-2-white" : "border-2"}`} onClick={() => setView("json")}>JSON</button>
+                <button className={`btn1 ${view === "book" ? "border-2-white" : "border-2"}`} onClick={() => setView("book")}>Book</button>
+                <button className={`btn1 ${view === "html" ? "border-2-white" : "border-2"}`} onClick={() => setView("html")}>HTML</button>
+                {htmlContent && view === "html" && <button className="btn1" onClick={generatePdf}>Generate PDF</button>}
+                {view === "json" && <button className="btn1" onClick={(e) => handleDownload(e, "book")}>{document.title.replace(/ /g, '-')}-.json</button>}
+                {selector?.bookSummary && <button className="btn1" onClick={(e) => handleDownload(e, "metadata")}>{document.title.replace(/ /g, '-')}-metadata.json</button>}
             </div>
 
             <div id="output" className={selector?.error ? 'error' : ''}>
@@ -87,8 +114,10 @@ const Output = ({ selector, dispatch }) => {
 
                 {
                     view === "json" && <>
-                        {
-                            "json data pending to work"
+                        {selector?.bookSummary && selector?.chapters.length > 0 &&
+                            <pre>
+                                {JSON.stringify({ bookSummary: selector.bookSummary, chapters: selector.chapters }, null, 4)}
+                            </pre>
                         }
                     </>
                 }
@@ -107,7 +136,7 @@ const Output = ({ selector, dispatch }) => {
                     </>
                 }
 
-                {error && <p className='error'>{error}</p>}
+                {error || selector.error && <div className='error'>{error || selector.error?.message}</div>}
 
                 {selector?.globalLoading && (
                     <p>Waiting for the output...</p>

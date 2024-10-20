@@ -13,6 +13,8 @@ const GenerateSummary = ({ selector, dispatch, fetchFullBookChunkedJsonData }) =
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setError(null)
+        setLoading(true)
 
         const title = e.target[0].value
         const style = e.target[1].value
@@ -21,11 +23,10 @@ const GenerateSummary = ({ selector, dispatch, fetchFullBookChunkedJsonData }) =
 
         if (!title || !style || !genre || !description) {
             setError('Please fill all the fields')
+            setLoading(false)
             return
         }
 
-        setError(null)
-        setLoading(true)
         const response = await fetch('http://localhost:5000/api/generate-book-summary', {
             method: 'POST',
             headers: {
@@ -47,7 +48,7 @@ const GenerateSummary = ({ selector, dispatch, fetchFullBookChunkedJsonData }) =
 
         if (!response.ok) {
             setError('Something went wrong')
-        } else if (data.error) {
+        } else if ('error' in data) {
             setError(data.error)
         } else {
             dispatch({ type: 'setbookSummary', payload: data })
@@ -151,9 +152,9 @@ const GenerateSummary = ({ selector, dispatch, fetchFullBookChunkedJsonData }) =
                 </form>
             </div>
             <div id="generated-summary">
-                {loading && <>waiting for response...</>}
+                {!selector?.bookSummary && loading && <>waiting for response...</>}
                 {error && <p className='error'>{error}</p>}
-                {selector?.bookSummary && <BookSummary bookSummary={selector.bookSummary} handleGenerateFullBook={handleGenerateFullBook} />}
+                {!error && selector?.bookSummary && <BookSummary bookSummary={selector.bookSummary} handleGenerateFullBook={handleGenerateFullBook} />}
             </div>
         </div>
     )

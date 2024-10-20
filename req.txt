@@ -2,5 +2,7 @@ python-dotenv
 google-generativeai
 Jinja2
 fpdf2
-flask
+flask[async]
 Flask-Cors
+asyncio
+pyppeteer

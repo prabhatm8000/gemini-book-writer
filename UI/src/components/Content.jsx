@@ -35,10 +35,13 @@ const Content = () => {
     useEffect(() => {
         if (selector.chapters.length > 0) {
             document.title = `${selector.bookSummary?.title || "Book"}`
+        } else {
+            document.title = "Gemini Writer"
         }
     }, [selector])
 
     async function fetchFullBookChunkedJsonData() {
+        dispatch({ type: 'seterror', payload: null });
         dispatch({ type: 'setpollChapter', payload: true });
         dispatch({ type: 'setGlobalLoading', payload: true });
 

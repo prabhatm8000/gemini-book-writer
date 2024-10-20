@@ -1,8 +1,8 @@
 from flask import Request
 from gemini.generateBook import GenerateBookIdeasWithParams, GenerateBookWithParams, MODEL
-from gemini.utils import renderBookHtml
+from gemini.utils import renderBookHtml, generatePdfFromHtml
 from api.errors import APIError
-from api.validation import generate_book_ideas_controller_validation, generate_book_summary_controller_validation, generate_pdf_controller_validation
+from api.validation import generate_book_ideas_controller_validation, generate_book_summary_controller_validation, generate_html_controller_validation
 import json
 
 book_idea_generator = GenerateBookIdeasWithParams()
@@ -54,9 +54,9 @@ def generate_full_book_controller():
             "generateBookSummary must be called first, if you got this error even after calling generateBookSummary, then please refresh the page and try again", 400)
 
 
-def generate_pdf_controller(request: Request):
+def generate_html_controller(request: Request):
     payload = request.get_json()
-    generate_pdf_controller_validation(payload)
+    generate_html_controller_validation(payload)
 
     try:
         book_summary = payload["bookSummary"]
@@ -66,6 +66,24 @@ def generate_pdf_controller(request: Request):
                                       "bookContent": bookContent, "author": MODEL})
 
         return htmlContent, 200
+
+    except Exception as e:
+        raise APIError(e, 500)
+
+async def generate_pdf_controller(request: Request):
+    payload = request.get_json()
+    generate_html_controller_validation(payload)
+
+    try:
+        book_summary = payload["bookSummary"]
+        bookContent = payload["bookContent"]
+
+        htmlContent = renderBookHtml({"bookSummary": book_summary,
+                                      "bookContent": bookContent, "author": MODEL})
+        
+        pdfContent = await generatePdfFromHtml(htmlContent)
+
+        return pdfContent, 200
 
     except Exception as e:
         raise APIError(e, 500)

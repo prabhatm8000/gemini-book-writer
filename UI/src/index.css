@@ -282,3 +282,11 @@ p {
     padding: 10px 0px;
     border: #fff 2px
 }
+
+.border-2-white {
+    border: #fff 2px solid;
+}
+
+.border-2 {
+    border: #ffffff00 2px solid;
+}

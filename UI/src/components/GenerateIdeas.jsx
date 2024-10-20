@@ -18,29 +18,33 @@ const GenerateIdeas = ({ selector, dispatch }) => {
 
         setError(null)
         setLoading(true)
-        const response = await fetch('http://localhost:5000/api/generate-book-ideas', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                prompt,
-                limit
+        try {
+            const response = await fetch('http://localhost:5000/api/generate-book-ideas', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prompt,
+                    limit
+                })
             })
-        })
-        setLoading(false)
 
-        if (!response.ok) {
-            const data = await response.json()
-            setError(data.error)
-        } else {
-            const data = await response.json()
-            if (Array.isArray(data?.ideas)) {
-                setIdeas(data?.ideas)
-            } else {
-                setError(`${data}`)
+            if (!response.ok) {
+                setError("Something went wrong")
             }
+
+            const data = await response.json()
+            if ("error" in data) {
+                setError(data.error)
+            } else {
+                setIdeas(data?.ideas)
+            }
+        } catch (error) {
+            setError("Something went wrong")
+            setIdeas([])
         }
+        setLoading(false)
     }
 
     const handleGenerateChaptersBtn = (index) => {
@@ -75,7 +79,7 @@ const GenerateIdeas = ({ selector, dispatch }) => {
                         max="10"
                     />
                     <input
-                        disabled={loading || selector?.globalLoading}
+                        disabled={loading || selector.globalLoading}
                         className="btn1"
                         type="submit"
                         value="Generate Ideas"
@@ -86,7 +90,7 @@ const GenerateIdeas = ({ selector, dispatch }) => {
 
             <div id="generated-ideas" className={error ? 'error' : ''}>
                 {loading && <>waiting for response...</>}
-                {error && <>Error: {error}</>}
+                {error && <p className='error'>{error}</p>}
                 {ideas.length > 0 && (
                     ideas.map((item, index) => {
                         return (

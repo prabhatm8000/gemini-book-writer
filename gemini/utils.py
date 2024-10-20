@@ -3,6 +3,8 @@ import time
 import re
 import os
 from jinja2 import Environment, FileSystemLoader
+import asyncio
+from pyppeteer import launch
 
 
 def geminiResponseToJson(text: str) -> dict:
@@ -35,3 +37,25 @@ def renderBookHtml(book: dict) -> str:
     #     f.write(renderedHtml)
 
     return renderedHtml
+
+
+async def generatePdfFromHtml(html_content):
+    """
+    Generates a pdf from the html.
+    """
+    browser = await launch(headless=False, executablePath=os.environ.get("Chromium_exe_path"))
+    page = await browser.newPage()
+    await page.setContent(html_content)
+
+    pdf_bytes = await page.pdf({
+        'format': 'letter',
+        'margin': {
+            'top': '0.6in',
+            'right': '0.6in',
+            'bottom': '0.6in',
+            'left': '0.6in'
+        }
+    })
+
+    await browser.close()
+    return pdf_bytes

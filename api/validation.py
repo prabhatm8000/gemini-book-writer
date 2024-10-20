@@ -38,7 +38,7 @@ def generate_book_summary_controller_validation(payload: dict):
         raise APIError("Missing logic", 400)
 
 
-def generate_pdf_controller_validation(payload: dict):
+def generate_html_controller_validation(payload: dict):
     if (payload is None):
         raise APIError("Invalid JSON", 400)
 
