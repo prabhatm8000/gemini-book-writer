@@ -3,8 +3,12 @@ import time
 import re
 import os
 from jinja2 import Environment, FileSystemLoader
-import asyncio
-from pyppeteer import launch
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+import time
+import base64
+from urllib import parse
 
 
 def geminiResponseToJson(text: str) -> dict:
@@ -39,23 +43,46 @@ def renderBookHtml(book: dict) -> str:
     return renderedHtml
 
 
-async def generatePdfFromHtml(html_content):
+def generatePdfFromHtml(html_content):
     """
     Generates a pdf from the html.
     """
-    browser = await launch(headless=False, executablePath=os.environ.get("Chromium_exe_path"))
-    page = await browser.newPage()
-    await page.setContent(html_content)
+    # Set up Chrome options
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--no-sandbox')
 
-    pdf_bytes = await page.pdf({
-        'format': 'letter',
-        'margin': {
-            'top': '0.6in',
-            'right': '0.6in',
-            'bottom': '0.6in',
-            'left': '0.6in'
-        }
-    })
+    driver = webdriver.Chrome(options=chrome_options)
 
-    await browser.close()
+    encoded = parse.quote(html_content)
+
+    pdf_bytes = b""
+    try:
+        driver.get(f"""data:text/html,{encoded}""")
+        time.sleep(1)
+
+        # Enable Chrome DevTools Protocol
+        pdf = driver.execute_cdp_cmd("Page.printToPDF", {
+            "margin": {
+                "top": "2in",
+                "bottom": "2in",
+                "left": "2in",
+                "right": "2in"
+            },
+            "pageSize": {
+                "width": "8.5in",
+                "height": "11in",
+                "paperWidth": "8.5in",
+                "paperHeight": "11in"
+            }
+        })
+
+        pdf_bytes = base64.b64decode(pdf['data'])
+
+    finally:
+        driver.quit()
+        # if os.path.exists(pdf_file_path):
+        # os.remove(pdf_file_path)
+
     return pdf_bytes

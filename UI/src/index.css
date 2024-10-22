@@ -8,7 +8,7 @@
 
 ::-webkit-scrollbar {
     width: 4px;
-    /* height: 4px; */
+    height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -55,6 +55,16 @@ a {
 h3,
 p {
     margin: 0;
+}
+
+.btn {
+    color: #fff;
+    background-color: #00000000;
+    border: 0;
+    outline: 0;
+    border-color: #00000000;
+    padding: 0;
+    margin: 10px 0;
 }
 
 #content {
@@ -289,4 +299,23 @@ p {
 
 .border-2 {
     border: #ffffff00 2px solid;
+}
+
+.loading-circle {
+    color: white;
+    animation: spin 1s linear infinite;
+    margin: 10px 0;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.flex-gap-10 {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
 }

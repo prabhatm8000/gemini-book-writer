@@ -26,12 +26,36 @@ const Output = ({ selector, dispatch }) => {
             })
         })
 
-        const blob = await res.blob()
-        const url = URL.createObjectURL(blob)
-        iframeRef.current.src = url
+        if (!res.ok) {
+            setError("Something went wrong")
+            return
+        }
+
+        const blob = await res.blob(); // Get the PDF as a Blob
+        const url = window.URL.createObjectURL(blob); // Create a URL for the Blob
+        const a = document.createElement('a'); // Create a link element
+        a.href = url;
+
+        // Use the `Content-Disposition` header to determine the filename
+        const contentDisposition = res.headers.get('content-disposition');
+        let fileName = 'output.pdf'; // Default filename
+
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+            const matches = filenameRegex.exec(contentDisposition);
+            if (matches != null && matches[1]) {
+                fileName = matches[1].replace(/['"]/g, '');
+            }
+        }
+
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
     };
 
-    const handleGeneratePdfBtn = async () => {
+    const getHTML = async () => {
         setView("html")
         setError(null)
 
@@ -77,11 +101,10 @@ const Output = ({ selector, dispatch }) => {
         URL.revokeObjectURL(url);
     };
 
-    useEffect(() => {
-        if (view === "html" && !htmlContent) {
-            handleGeneratePdfBtn()
-        }
-    }, [htmlContent, view])
+    const handleHTMLBtn = () => {
+        setView("html")
+        getHTML()
+    }
 
     return (
         <div className="content-container" id="output-container">
@@ -89,7 +112,7 @@ const Output = ({ selector, dispatch }) => {
             <div className='btn-group'>
                 <button className={`btn1 ${view === "json" ? "border-2-white" : "border-2"}`} onClick={() => setView("json")}>JSON</button>
                 <button className={`btn1 ${view === "book" ? "border-2-white" : "border-2"}`} onClick={() => setView("book")}>Book</button>
-                <button className={`btn1 ${view === "html" ? "border-2-white" : "border-2"}`} onClick={() => setView("html")}>HTML</button>
+                <button className={`btn1 ${view === "html" ? "border-2-white" : "border-2"}`} onClick={handleHTMLBtn}>HTML</button>
                 {htmlContent && view === "html" && <button className="btn1" onClick={generatePdf}>Generate PDF</button>}
                 {view === "json" && <button className="btn1" onClick={(e) => handleDownload(e, "book")}>{document.title.replace(/ /g, '-')}-.json</button>}
                 {selector?.bookSummary && <button className="btn1" onClick={(e) => handleDownload(e, "metadata")}>{document.title.replace(/ /g, '-')}-metadata.json</button>}
@@ -129,7 +152,7 @@ const Output = ({ selector, dispatch }) => {
                                 <iframe
                                     ref={iframeRef}
                                     title="Content IFrame"
-                                    style={{ width: "100%", height: "100%", background: "#fff" }}
+                                    style={{ width: "100%", height: "98%", background: "#fff" }}
                                     srcDoc={htmlContent} // Load the HTML content directly
                                 /> : ""
                         }

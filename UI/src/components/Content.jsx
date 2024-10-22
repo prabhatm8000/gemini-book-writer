@@ -44,6 +44,7 @@ const Content = () => {
         dispatch({ type: 'seterror', payload: null });
         dispatch({ type: 'setpollChapter', payload: true });
         dispatch({ type: 'setGlobalLoading', payload: true });
+        dispatch({ type: 'resetChapters' });
 
         const response = await fetch('http://localhost:5000/api/generate-full-book');
         const reader = response.body.getReader();

@@ -5,4 +5,4 @@ fpdf2
 flask[async]
 Flask-Cors
 asyncio
-pyppeteer
+selenium

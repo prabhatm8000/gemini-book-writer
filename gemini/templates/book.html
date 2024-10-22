@@ -18,7 +18,7 @@
                 margin: 0%;
             }
             h1 {
-                font-size: 72px;
+                font-size: 78px;
                 margin-bottom: 20px;
             }
             p {
@@ -55,13 +55,23 @@
                 justify-content: center;
                 gap: 20px;
             }
+            .chapter-header {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: 5px;
+            }
             .chapter-header h2 {
-                font-size: 42px;
+                font-size: 48px;
             }
             .chapter-summary {
-                width: 85%;
+                width: 80%;
                 font-style: italic;
-                padding: 10px 0;
+                padding-top: 10px;
+                padding-bottom: 50px;
+            }
+            .chapter-content {
+                text-align: justify;
             }
         </style>
     </head>
@@ -94,7 +104,7 @@
                 </p>
             </div>
             {% for paragraph in content.chapterContent %}
-            <p>{{ paragraph }}</p>
+            <p class="chapter-content">{{ paragraph }}</p>
             {% endfor %}
         </div>
         {% endfor %}

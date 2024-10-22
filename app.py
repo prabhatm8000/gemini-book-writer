@@ -5,7 +5,9 @@ from flask_cors import CORS
 app = Flask(__name__)
 app.register_blueprint(api, url_prefix="/api")
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+# Content-Disposition for file download
+CORS(app, resources={r"/*": {"origins": "*"}},
+     expose_headers=["Content-Disposition"])
 
 
 @app.route("/")

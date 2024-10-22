@@ -1,9 +1,15 @@
-from flask import Request
-from gemini.generateBook import GenerateBookIdeasWithParams, GenerateBookWithParams, MODEL
-from gemini.utils import renderBookHtml, generatePdfFromHtml
-from api.errors import APIError
-from api.validation import generate_book_ideas_controller_validation, generate_book_summary_controller_validation, generate_html_controller_validation
 import json
+import time
+
+from flask import Request
+
+from api.errors import APIError
+from api.validation import (generate_book_ideas_controller_validation,
+                            generate_book_summary_controller_validation,
+                            generate_html_controller_validation)
+from gemini.generateBook import (MODEL, GenerateBookIdeasWithParams,
+                                 GenerateBookWithParams)
+from gemini.utils import generatePdfFromHtml, renderBookHtml
 
 book_idea_generator = GenerateBookIdeasWithParams()
 book_chapter_generator = GenerateBookWithParams()
@@ -32,8 +38,8 @@ def generate_book_summary_controller(request: Request):
         description = payload["description"]
         genre = payload["genre"]
         noOfChapters = int(payload["noOfChapters"])
-        creativity = payload["creativity"]
-        logic = payload["logic"]
+        creativity = int(payload["creativity"])
+        logic = int(payload["logic"])
 
         response = book_chapter_generator.generateBookSummary(
             title=title, description=description, genre=genre, style=style, chapters=noOfChapters, creativity=creativity, logic=logic)
@@ -44,7 +50,7 @@ def generate_book_summary_controller(request: Request):
 
 def generate_full_book_controller():
     try:
-        for chapter in book_chapter_generator.generateAllChapters():
+        for chapter in book_chapter_generator.generateAllChapters(5, "very-long"):
             jsonString = f"{json.dumps(chapter)}\n".encode(
                 'utf-8')  # convert to bytes
             yield jsonString
@@ -70,7 +76,8 @@ def generate_html_controller(request: Request):
     except Exception as e:
         raise APIError(e, 500)
 
-async def generate_pdf_controller(request: Request):
+
+def generate_pdf_controller(request: Request):
     payload = request.get_json()
     generate_html_controller_validation(payload)
 
@@ -78,12 +85,12 @@ async def generate_pdf_controller(request: Request):
         book_summary = payload["bookSummary"]
         bookContent = payload["bookContent"]
 
+        file_name = f"{book_summary['title'].replace(' ', '-')}_{time.time()}.pdf"
         htmlContent = renderBookHtml({"bookSummary": book_summary,
                                       "bookContent": bookContent, "author": MODEL})
-        
-        pdfContent = await generatePdfFromHtml(htmlContent)
+        pdfContent = generatePdfFromHtml(htmlContent)
 
-        return pdfContent, 200
+        return file_name, pdfContent, 200
 
     except Exception as e:
         raise APIError(e, 500)
