@@ -159,7 +159,10 @@ class Utils:
         """
         Creates a zip file of the generated book summary and pdf.
         """
+
         path = os.path.join(os.getcwd(), "output")
+        if not os.path.exists(path):
+            os.makedirs(path)
 
         with zipfile.ZipFile(f"{path}/{filename}", 'w') as zip_file:
             zip_file.writestr('metadata.json', json.dumps(book_summary))
