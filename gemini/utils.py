@@ -5,84 +5,169 @@ import os
 from jinja2 import Environment, FileSystemLoader
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 import time
 import base64
 from urllib import parse
+import requests
+from api.errors import APIError
+import zipfile
 
 
-def geminiResponseToJson(text: str) -> dict:
-    """
-    Converts the gemini response to json.
-    """
-    jsonStr = text.strip().removeprefix(
-        "```json").removesuffix("```")
-    jsonStr = re.sub(r'\\[nrtbfv\'"\\]', ' ', jsonStr)
-    return dict(json.loads(jsonStr))
+class Utils:
 
+    def __init__(self):
+        self.bookSummary = {}
+        self.pdf_bytes = None
+        self.cover_img_url = None
 
-def logger(message: str, file: str = "log.txt") -> None:
-    """
-    Logs the generated book summary.
-    """
-    with open(file, "a") as f:
-        f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}]: {message}\n\n")
+    def geminiResponseToJson(self, text: str) -> dict:
+        """
+        Converts the gemini response to json.
+        """
+        jsonStr = text.strip().removeprefix(
+            "```json").removesuffix("```")
+        jsonStr = re.sub(r'\\[nrtbfv\'"\\]', ' ', jsonStr)
+        return dict(json.loads(jsonStr))
 
+    def logger(self, message: str, file: str = "log.txt") -> None:
+        """
+        Logs the generated book summary.
+        """
+        with open(file, "a") as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}]: {message}\n\n")
 
-def renderBookHtml(book: dict) -> str:
-    """
-    Converts the generated book summary to pdf.
-    """
-    template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-    env = Environment(loader=FileSystemLoader(template_dir))
-    template = env.get_template('book.html')
-    renderedHtml = template.render(book)
-    # with open(os.path.dirname(__file__) + "/" + "rendered.html", 'w') as f:
-    #     f.write(renderedHtml)
+    def renderBookHtml(self, book: dict) -> str:
+        """
+        Converts the generated book summary to pdf.
+        """
+        try:
+            bookCoverImg = self.generateCoverImage(book["bookSummary"])
 
-    return renderedHtml
+            try:
+                self.bookSummary = book["bookSummary"]
+                self.cover_img_url = bookCoverImg["data"][0]["asset_url"]
+            except IndexError:
+                self.cover_img_url = None
 
+            book["bookCoverImg"] = bookCoverImg
+        except APIError as e:
+            book["bookCoverImg"] = None
 
-def generatePdfFromHtml(html_content):
-    """
-    Generates a pdf from the html.
-    """
-    # Set up Chrome options
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--no-sandbox')
+        template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+        env = Environment(loader=FileSystemLoader(template_dir))
+        template = env.get_template('book.html')
+        renderedHtml = template.render(book)
+        # with open(os.path.dirname(__file__) + "/" + "rendered.html", 'w') as f:
+        #     f.write(renderedHtml)
 
-    driver = webdriver.Chrome(options=chrome_options)
+        return renderedHtml
 
-    encoded = parse.quote(html_content)
+    def generatePdfFromHtml(self, html_content):
+        """
+        Generates a pdf from the html.
+        """
+        # Set up Chrome options
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--no-sandbox')
 
-    pdf_bytes = b""
-    try:
-        driver.get(f"""data:text/html,{encoded}""")
-        time.sleep(1)
+        driver = webdriver.Chrome(options=chrome_options)
 
-        # Enable Chrome DevTools Protocol
-        pdf = driver.execute_cdp_cmd("Page.printToPDF", {
-            "margin": {
-                "top": "2in",
-                "bottom": "2in",
-                "left": "2in",
-                "right": "2in"
-            },
-            "pageSize": {
-                "width": "8.5in",
-                "height": "11in",
-                "paperWidth": "8.5in",
-                "paperHeight": "11in"
+        encoded = parse.quote(html_content)
+
+        pdf_bytes = b""
+        try:
+            driver.get(f"""data:text/html,{encoded}""")
+            time.sleep(1)
+
+            # Enable Chrome DevTools Protocol
+            pdf = driver.execute_cdp_cmd("Page.printToPDF", {
+                "margin": {
+                    "top": "2in",
+                    "bottom": "2in",
+                    "left": "2in",
+                    "right": "2in"
+                },
+                "pageSize": {
+                    "width": "8.5in",
+                    "height": "11in",
+                    "paperWidth": "8.5in",
+                    "paperHeight": "11in"
+                }
+            })
+
+            pdf_bytes = base64.b64decode(pdf['data'])
+
+        finally:
+            driver.quit()
+            # if os.path.exists(pdf_file_path):
+            # os.remove(pdf_file_path)
+
+        self.createZipFile(book_summary=self.bookSummary, pdf_bytes=pdf_bytes,
+                           cover_img_url=self.cover_img_url, filename=f"{time.time()}.zip")
+
+        return pdf_bytes
+
+    def generateCoverImage(self, bookSummary: dict):
+        url = "https://api.limewire.com/api/image/generation"
+
+        summary = bookSummary["summary"]
+        if (len(summary) > 1800):
+            summary = bookSummary["summary"][:1800]
+
+        prompt = f"""{{ "title" : {bookSummary["title"]}, "summary" : {summary} }}"""
+
+        payload = {
+            "prompt": f"""generate cover image for book, here is the json of the book summary {prompt}""",
+            "negative_prompt": "if prompt is not clear or contains NSFW content generate a fake image, no text",
+            "samples": 1,
+            "quality": "LOW",
+            "guidance_scale": 50,
+            "aspect_ratio": "13:19",
+            "style": "PHOTOREALISTIC"
+        }
+
+        key = "LIMEWIRE_KEY_"
+        keyCount = 1
+        token = os.getenv(f"{key}{keyCount}")
+        while token:
+            headers = {
+                "Content-Type": "application/json",
+                "X-Api-Version": "v1",
+                "Accept": "application/json",
+                "Authorization": f"Bearer {token}"
             }
-        })
 
-        pdf_bytes = base64.b64decode(pdf['data'])
+            response = requests.post(url, json=payload, headers=headers)
+            data = dict(response.json())
+            keyCount += 1
+            token = os.getenv(f"{key}{keyCount}")
 
-    finally:
-        driver.quit()
-        # if os.path.exists(pdf_file_path):
-        # os.remove(pdf_file_path)
+            if data["status"] == 403 and token:
+                self.logger(f"{data}")
+                print(f"using next token, {keyCount}")
+                continue
 
-    return pdf_bytes
+            if response.status_code == 200 or data["status"] == "COMPLETED":
+                return data
+            else:
+                self.logger(f"{data}")
+                raise APIError(data['detail'], data['status'])
+
+    def createZipFile(self, book_summary: dict, pdf_bytes: bytes, cover_img_url: str, filename: str) -> str:
+        """
+        Creates a zip file of the generated book summary and pdf.
+        """
+        path = os.path.join(os.getcwd(), "output")
+
+        with zipfile.ZipFile(f"{path}/{filename}", 'w') as zip_file:
+            zip_file.writestr('metadata.json', json.dumps(book_summary))
+            zip_file.writestr('book.pdf', pdf_bytes)
+
+            if cover_img_url:
+                response = requests.get(cover_img_url)
+                if response.status_code == 200:
+                    zip_file.writestr('cover.jpg', response.content)
+
+        return filename

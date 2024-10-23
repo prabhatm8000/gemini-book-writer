@@ -53,6 +53,8 @@ const Content = () => {
 
         while (!done) {
             const chunkText = decoder.decode(value, { stream: true });
+            console.log(chunkText);
+            
             try {
                 const jsonData = JSON.parse(chunkText);
                 if (jsonData?.error) {

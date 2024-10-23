@@ -9,10 +9,11 @@ from api.validation import (generate_book_ideas_controller_validation,
                             generate_html_controller_validation)
 from gemini.generateBook import (MODEL, GenerateBookIdeasWithParams,
                                  GenerateBookWithParams)
-from gemini.utils import generatePdfFromHtml, renderBookHtml
+from gemini.utils import Utils
 
 book_idea_generator = GenerateBookIdeasWithParams()
 book_chapter_generator = GenerateBookWithParams()
+utils = Utils()
 
 
 def generate_book_ideas_controller(request: Request):
@@ -68,8 +69,8 @@ def generate_html_controller(request: Request):
         book_summary = payload["bookSummary"]
         bookContent = payload["bookContent"]
 
-        htmlContent = renderBookHtml({"bookSummary": book_summary,
-                                      "bookContent": bookContent, "author": MODEL})
+        htmlContent = utils.renderBookHtml({"bookSummary": book_summary,
+                                            "bookContent": bookContent, "author": MODEL})
 
         return htmlContent, 200
 
@@ -86,9 +87,9 @@ def generate_pdf_controller(request: Request):
         bookContent = payload["bookContent"]
 
         file_name = f"{book_summary['title'].replace(' ', '-')}_{time.time()}.pdf"
-        htmlContent = renderBookHtml({"bookSummary": book_summary,
-                                      "bookContent": bookContent, "author": MODEL})
-        pdfContent = generatePdfFromHtml(htmlContent)
+        htmlContent = utils.renderBookHtml({"bookSummary": book_summary,
+                                            "bookContent": bookContent, "author": MODEL})
+        pdfContent = utils.generatePdfFromHtml(htmlContent)
 
         return file_name, pdfContent, 200
 

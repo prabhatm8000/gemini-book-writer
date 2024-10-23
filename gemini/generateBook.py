@@ -2,7 +2,7 @@ from dotenv.main import load_dotenv
 import os
 import google.generativeai as genai
 from gemini.chatHistory import generateBookWithParamsHistory, generateBookIdeasWithParamsHistory
-from gemini.utils import geminiResponseToJson, logger
+from gemini.utils import Utils
 import time
 
 load_dotenv()
@@ -15,6 +15,8 @@ config = genai.types.GenerationConfig(
 )
 
 MODEL = "gemini-1.5-flash"
+
+utils = Utils()
 
 class GenerateBookIdeasWithParams:
     """
@@ -51,7 +53,7 @@ class GenerateBookIdeasWithParams:
             }}
         """)
 
-        return geminiResponseToJson(response.text)
+        return utils.geminiResponseToJson(response.text)
 
 
 class GenerateBookWithParams:
@@ -138,7 +140,7 @@ class GenerateBookWithParams:
             }}
         """)
 
-        self.bookSummary = geminiResponseToJson(response.text)
+        self.bookSummary = utils.geminiResponseToJson(response.text)
         self.bookSummary["genre"] = self.genre.split(",")
         return self.bookSummary
 
@@ -179,18 +181,18 @@ class GenerateBookWithParams:
                     }}
                 """)
                 res = response.text
-                output = geminiResponseToJson(res)
+                output = utils.geminiResponseToJson(res)
                 return output
             except Exception as e:
                 error = e.__class__.__name__ + ": " + e.__str__() + " on chapter " + \
                     str(chapterNo)
-                logger(error)
+                utils.logger(error)
                 lastError = error
                 retryCount += 1
                 time.sleep(1)
 
                 if (retryCount == 3):
-                    logger("Failed to generate chapter " + str(chapterNo))
+                    utils.logger("Failed to generate chapter " + str(chapterNo))
                     raise e
 
     def generateAllChapters(self, estimatedParagraph: int = 3, paragraphSize: str = "long"):

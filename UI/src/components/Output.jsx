@@ -79,7 +79,7 @@ const Output = ({ selector, dispatch }) => {
         setHtmlContent(html)
     }
 
-    const handleDownload = (e, type) => {
+    const handleJsonDownload = (e, type) => {
         let data;
         if (type === "book") {
             data = { bookSummary: selector.bookSummary, chapters: selector.chapters }
@@ -110,12 +110,12 @@ const Output = ({ selector, dispatch }) => {
         <div className="content-container" id="output-container">
             <h3>2. Output</h3>
             <div className='btn-group'>
-                <button className={`btn1 ${view === "json" ? "border-2-white" : "border-2"}`} onClick={() => setView("json")}>JSON</button>
-                <button className={`btn1 ${view === "book" ? "border-2-white" : "border-2"}`} onClick={() => setView("book")}>Book</button>
-                <button className={`btn1 ${view === "html" ? "border-2-white" : "border-2"}`} onClick={handleHTMLBtn}>HTML</button>
+                <button className={`btn1 ${view === "json" ? "border-2-white" : "border-2"}`} onClick={() => setView("json")}>Raw Json</button>
+                <button className={`btn1 ${view === "book" ? "border-2-white" : "border-2"}`} onClick={() => setView("book")}>Chapters</button>
+                <button className={`btn1 ${view === "html" ? "border-2-white" : "border-2"}`} onClick={handleHTMLBtn}>Preview</button>
                 {htmlContent && view === "html" && <button className="btn1" onClick={generatePdf}>Generate PDF</button>}
-                {view === "json" && <button className="btn1" onClick={(e) => handleDownload(e, "book")}>{document.title.replace(/ /g, '-')}-.json</button>}
-                {selector?.bookSummary && <button className="btn1" onClick={(e) => handleDownload(e, "metadata")}>{document.title.replace(/ /g, '-')}-metadata.json</button>}
+                {view === "json" && <button className="btn1" onClick={(e) => handleJsonDownload(e, "book")}>{document.title.replace(/ /g, '-')}-.json</button>}
+                {selector?.bookSummary && <button className="btn1" onClick={(e) => handleJsonDownload(e, "metadata")}>{document.title.replace(/ /g, '-')}-metadata.json</button>}
             </div>
 
             <div id="output" className={selector?.error ? 'error' : ''}>

@@ -36,6 +36,23 @@
                 width: 85%;
                 padding: 40px 0px;
             }
+            .cover {
+                display: grid;
+                grid-template-columns:1fr;
+                grid-template-rows: 1fr 9fr;
+                align-items: end;
+                gap: 20px;
+                padding: 20px;
+            }
+            .cover img {
+                width: 100%;
+                height: 80vh;
+                object-fit: cover;
+            }
+            .cover h3 {
+                font-size: 22px;
+            }
+            .cover,
             .cover-page,
             .table-content,
             .chapter-page {
@@ -76,6 +93,32 @@
         </style>
     </head>
     <body>
+        {% if bookCoverImg %}
+        <div class="cover">
+            <h3>{{ bookSummary.title }}</h3>
+            <div>
+                <img
+                    src="{{bookCoverImg.data[0].asset_url}}"
+                    alt="{{bookSummary.title}}"
+                    width="{{bookCoverImg.data[0].width}}"
+                    height="{{bookCoverImg.data[0].height}}"
+                />
+            </div>
+        </div>
+        {% endif %} {% if not bookCoverImg %}
+        <div class="cover">
+            <h3>{{ bookSummary.title }}</h3>
+            <div>
+                <img
+                    src="http://localhost:5000/static/images/testing.jpg"
+                    alt="{{bookSummary.title}}"
+                    width="832"
+                    height="1216"
+                />
+            </div>
+        </div>
+        {% endif %}
+
         <div class="cover-page">
             <h1>{{ bookSummary.title }}</h1>
             <div class="author-name">- {{author}}</div>

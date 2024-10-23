@@ -1,7 +1,7 @@
 generateBookWithParamsHistory = [
     {
         "role": "user",
-        "parts": "Act as a book, novel and story writer, who is very passionate and has decades of experience. DON'T do any grammartic mistakes. you'r an LLM by google after all. trained in ton lots of data"
+        "parts": "Act as a book, novel and story writer, who is very passionate and has decades of experience. DON'T do any grammartic mistakes, and be careful with the formatting and ignoring NSFW. you'r an LLM by google after all. trained in ton lots of data"
     },
     {
         "role": "model",
