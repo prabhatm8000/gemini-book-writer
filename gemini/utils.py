@@ -17,6 +17,7 @@ class Utils:
 
     def __init__(self):
         self.bookSummary = {}
+        self.htmlContent = None
         self.pdf_bytes = None
         self.cover_img_url = None
 
@@ -41,10 +42,9 @@ class Utils:
         Converts the generated book summary to pdf.
         """
         try:
-            bookCoverImg = self.generateCoverImage(book["bookSummary"])
-
+            self.bookSummary = book["bookSummary"]
+            bookCoverImg = self.generateCoverImage(self.bookSummary)
             try:
-                self.bookSummary = book["bookSummary"]
                 self.cover_img_url = bookCoverImg["data"][0]["asset_url"]
             except IndexError:
                 self.cover_img_url = None
@@ -57,15 +57,21 @@ class Utils:
         env = Environment(loader=FileSystemLoader(template_dir))
         template = env.get_template('book.html')
         renderedHtml = template.render(book)
+        self.htmlContent = renderedHtml
         # with open(os.path.dirname(__file__) + "/" + "rendered.html", 'w') as f:
         #     f.write(renderedHtml)
 
         return renderedHtml
 
-    def generatePdfFromHtml(self, html_content):
+    def generatePdfFromHtml(self):
         """
         Generates a pdf from the html.
         """
+        if (self.htmlContent is None or self.bookSummary.get("title") == None):
+            raise APIError(
+                "generateHtml must be called first",
+                404
+            )
         # Set up Chrome options
         chrome_options = Options()
         chrome_options.add_argument('--headless')
@@ -74,9 +80,11 @@ class Utils:
 
         driver = webdriver.Chrome(options=chrome_options)
 
-        encoded = parse.quote(html_content)
+        encoded = parse.quote(self.htmlContent)
 
         pdf_bytes = b""
+        file_name = f"{self.bookSummary['title'].replace(' ', '-')}_{time.time()}.pdf"
+
         try:
             driver.get(f"""data:text/html,{encoded}""")
             time.sleep(1)
@@ -107,7 +115,7 @@ class Utils:
         self.createZipFile(book_summary=self.bookSummary, pdf_bytes=pdf_bytes,
                            cover_img_url=self.cover_img_url, filename=f"{time.time()}.zip")
 
-        return pdf_bytes
+        return file_name, pdf_bytes
 
     def generateCoverImage(self, bookSummary: dict):
         url = "https://api.limewire.com/api/image/generation"
@@ -119,8 +127,8 @@ class Utils:
         prompt = f"""{{ "title" : {bookSummary["title"]}, "summary" : {summary} }}"""
 
         payload = {
-            "prompt": f"""generate cover image for book, here is the json of the book summary {prompt}""",
-            "negative_prompt": "if prompt is not clear or contains NSFW content generate a fake image, no text",
+            "prompt": f"""generate cover image for book, don't put any text, here is the json of the book summary {prompt}""",
+            "negative_prompt": "if prompt is not clear or contains NSFW content generate a fake image, no text in the image",
             "samples": 1,
             "quality": "LOW",
             "guidance_scale": 50,

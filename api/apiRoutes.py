@@ -82,7 +82,7 @@ def generate_html():
         return jsonify({"message": "Internal Server Error", "details": str(e)}), 500
 
 
-@api.route('/generate-pdf', methods=['POST'])
+@api.route('/generate-pdf', methods=['GET'])
 def generate_pdf():
     try:
         [file_name, pdf_content,

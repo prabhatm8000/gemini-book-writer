@@ -1,8 +1,5 @@
 import json
-import time
-
 from flask import Request
-
 from api.errors import APIError
 from api.validation import (generate_book_ideas_controller_validation,
                             generate_book_summary_controller_validation,
@@ -79,19 +76,10 @@ def generate_html_controller(request: Request):
 
 
 def generate_pdf_controller(request: Request):
-    payload = request.get_json()
-    generate_html_controller_validation(payload)
-
     try:
-        book_summary = payload["bookSummary"]
-        bookContent = payload["bookContent"]
-
-        file_name = f"{book_summary['title'].replace(' ', '-')}_{time.time()}.pdf"
-        htmlContent = utils.renderBookHtml({"bookSummary": book_summary,
-                                            "bookContent": bookContent, "author": MODEL})
-        pdfContent = utils.generatePdfFromHtml(htmlContent)
+        file_name, pdfContent = utils.generatePdfFromHtml()
 
         return file_name, pdfContent, 200
 
-    except Exception as e:
-        raise APIError(e, 500)
+    except APIError as e:
+        raise APIError(e.message, e.status)
