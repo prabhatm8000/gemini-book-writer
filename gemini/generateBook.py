@@ -123,8 +123,7 @@ class GenerateBookWithParams:
         self.chapters = chapters
         self.creativity = creativity
         self.logic = logic
-
-        print(title, style, description, genre, chapters, creativity, logic)
+        
         self.checkParams()
 
 
