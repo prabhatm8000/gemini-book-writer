@@ -6,3 +6,4 @@ flask[async]
 Flask-Cors
 asyncio
 selenium
+mysql-connector-python
