@@ -43,7 +43,7 @@ def generate_book_summary_controller(request: Request):
             title=title, description=description, genre=genre, style=style, chapters=noOfChapters, creativity=creativity, logic=logic)
         return response, 200
     except ValueError as e:
-        raise APIError(e, 400)
+        raise APIError(e.args[0], 400)
 
 
 def generate_full_book_controller():

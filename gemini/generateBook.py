@@ -96,9 +96,6 @@ class GenerateBookWithParams:
         if (len(self.title) > 100):
             raise ValueError("title must be less than 100 characters")
 
-        if (len(self.description) > 500):
-            raise ValueError("description must be less than 500 characters")
-
         if (self.style not in ["persuasive", "narrative", "expository", "descriptive"]):
             raise ValueError(
                 "style must be 'persuasive', 'narrative', 'expository', or 'descriptive'")

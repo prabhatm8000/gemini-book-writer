@@ -173,12 +173,12 @@ class Utils:
             os.makedirs(path)
 
         with zipfile.ZipFile(f"{path}/{filename}", 'w') as zip_file:
-            zip_file.writestr('metadata.json', json.dumps(book_summary))
-            zip_file.writestr('book.pdf', pdf_bytes)
+            zip_file.writestr(f'{filename}_metadata.json', json.dumps(book_summary))
+            zip_file.writestr(f'{filename}_book.pdf', pdf_bytes)
 
             if cover_img_url:
                 response = requests.get(cover_img_url)
                 if response.status_code == 200:
-                    zip_file.writestr('cover.jpg', response.content)
+                    zip_file.writestr(f'{filename}_cover.jpg', response.content)
 
         return filename
