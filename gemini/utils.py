@@ -11,10 +11,11 @@ from urllib import parse
 import requests
 from api.errors import APIError
 import zipfile
+from PIL import Image
+from io import BytesIO
 
 
 class Utils:
-
     def __init__(self):
         self.bookSummary = {}
         self.htmlContent = None
@@ -177,8 +178,22 @@ class Utils:
             zip_file.writestr(f'{filename}_book.pdf', pdf_bytes)
 
             if cover_img_url:
-                response = requests.get(cover_img_url)
-                if response.status_code == 200:
-                    zip_file.writestr(f'{filename}_cover.jpg', response.content)
+                imgBytes = self.getImageFromUrlAndCompress(cover_img_url, reduction=0.6)
+                zip_file.writestr(f'{filename}_cover.jpg', imgBytes)
 
         return filename
+    
+    def getImageFromUrlAndCompress(self, img_url: str, reduction: float = 0.5) -> bytes:
+        response = requests.get(img_url)
+        if response.status_code != 200:
+            raise APIError("Failed to download image", response.status_code)
+        
+        image = Image.open(BytesIO(response.content))
+        width, height = image.size
+        new_width = int(width * (1 - reduction))
+        new_height = int(height * (1 - reduction))
+        resized_image = image.resize((new_width, new_height))
+
+        img_bytes = BytesIO()
+        resized_image.save(img_bytes, format='JPEG')
+        return img_bytes

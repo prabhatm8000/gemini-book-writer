@@ -162,6 +162,10 @@ output2.json
 #output
 output/*
 
+# upload book
+uploadbooks/temp/*
+uploadlogs.txt
+
 # react ui
 # Logs
 logs
