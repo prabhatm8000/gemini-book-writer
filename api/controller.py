@@ -52,7 +52,6 @@ def generate_full_book_controller():
             jsonString = f"{json.dumps(chapter)}\n".encode(
                 'utf-8')  # convert to bytes
             yield jsonString
-
     except Exception as e:
         raise APIError(
             "generateBookSummary must be called first, if you got this error even after calling generateBookSummary, then please refresh the page and try again", 400)

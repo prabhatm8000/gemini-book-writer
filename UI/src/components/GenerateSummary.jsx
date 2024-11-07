@@ -64,14 +64,19 @@ const GenerateSummary = ({ selector, dispatch, fetchFullBookChunkedJsonData }) =
     }
 
     const handleGenerateFullBook = () => {
-        fetchFullBookChunkedJsonData()
+        try {
+            fetchFullBookChunkedJsonData()
+        } catch (error) {
+            dispatch({ type: 'setpollChapter', payload: false });
+            dispatch({ type: 'setGlobalLoading', payload: false });
+        }
     }
 
     useEffect(() => {
         if (!selector.ideaForSummaryGen) {
             return;
         }
-        
+
         setFormData(prev => {
             const { title, style, description, genre } = selector?.ideaForSummaryGen;
             if (typeof genre === 'object') {
@@ -83,7 +88,7 @@ const GenerateSummary = ({ selector, dispatch, fetchFullBookChunkedJsonData }) =
                     genre: genre.join(', ') || prev.genre
                 }
             }
-        
+
             return {
                 ...prev,
                 title: title || prev.title,

@@ -13,4 +13,5 @@ TABLES["bookdata"] = (
     "  `pdfUrl` TEXT NOT NULL,"
     "  `pdfPublicId` TEXT NOT NULL,"
     "  PRIMARY KEY (`id`)"
-    ") ENGINE=InnoDB")
+    ") ENGINE=InnoDB"
+)

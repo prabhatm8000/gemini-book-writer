@@ -5,91 +5,44 @@ import cloudinary
 import cloudinary.api
 import cloudinary.uploader
 import dotenv
-import mysql.connector
-from mysql.connector import errorcode
-from Scheme import DB_NAME, TABLES
+
 import zipfile
 
+from pymongo import MongoClient
+from Scheme import DB_NAME
+
 dotenv.load_dotenv()
-# region database&table creation
-config = {
-    "user": os.getenv("AIVEN_MYSQL_USER"),
-    "password": os.getenv("AIVEN_MYSQL_PASSWORD"),
-    "host": os.getenv("AIVEN_MYSQL_HOST"),
-    "port": os.getenv("AIVEN_MYSQL_PORT"),
-    "database": os.getenv("AIVEN_MYSQL_DB_NAME")
-}
 
-mydb = None
-try:
-    mydb = mysql.connector.connect(
-        **config
-    )
-except mysql.connector.Error as err:
-    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        print("Something is wrong with your user name or password")
-    elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        print("Database does not exist")
-    else:
-        raise (err)
+client = MongoClient(os.environ.get("MONGODB_URI"))
 
-cursor = mydb.cursor()
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 try:
-    cursor.execute(
-        f"CREATE DATABASE {DB_NAME} DEFAULT CHARACTER SET 'utf8'")
-except mysql.connector.Error as err:
-    if err.errno == errorcode.ER_DB_CREATE_EXISTS:
-        print("Database {} already exists.".format(DB_NAME))
-    else:
-        print("Failed creating database: {}".format(err))
-        exit(1)
+    db = client[DB_NAME]
+    print("Connected to Database")
+
+    collections = db.list_collection_names()
+    if "bookdata" not in collections:
+        db.create_collection("bookdata")
+
+    collection = db["bookdata"]
+    print("Got the collection")
+except Exception as e:
+    print(e)
 
 
-try:
-    cursor.execute(f"USE {DB_NAME}")
-except mysql.connector.Error as err:
-    print("Database {} does not exists.".format(DB_NAME))
-    print(err)
-    exit(1)
+def addBookDataJsonDocsMany(bookDataJsonDocs: list[dict[str, str]]):
+    print("Uploading to DB")
+    collection.insert_many(bookDataJsonDocs)
+    print("{} book data docs uloaded to DB".format(len(bookDataJsonDocs)))
 
-try:
-    for table_name in TABLES:
-        table_description = TABLES[table_name]
-        cursor.execute(table_description)
-        print("Creating table {}: ".format(table_name), end='')
-except mysql.connector.Error as err:
-    if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
-        print("table {} already exists.".format(table_name))
-    else:
-        print(err.msg)
 
-mydb.commit()
-
-def addBookData(bookdata: dict[str, str]):
-    try:
-        cursor.execute(
-            "INSERT INTO bookmetadata (title, summary, genre, totalChapters, coverImageUrl, coverImagePublicId, pdfUrl, pdfPublicId) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            (
-                bookdata["title"],
-                bookdata["summary"],
-                bookdata["genre"],
-                bookdata["totalChapters"],
-                bookdata["coverImageUrl"],
-                bookdata["coverImagePublicId"],
-                bookdata["pdfUrl"],
-                bookdata["pdfPublicId"],
-            )
-        )
-        mydb.commit()
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_DUP_ENTRY:
-            print("Book already exists.")
-        else:
-            print(err)
-# endregion
-
-# region unzipping & parsing
+# region unzipping & parsing & uploading
 def unzip(file_name: str, extract_dir=os.path.join(os.getcwd(), "uploadbooks", "temp")) -> list[str]:
     files = []
     with zipfile.ZipFile(file_name, 'r') as zip_ref:
@@ -97,35 +50,43 @@ def unzip(file_name: str, extract_dir=os.path.join(os.getcwd(), "uploadbooks", "
         zip_ref.extractall(extract_dir)
     return files
 
+
 def parseAndUploadFiles(files: list[str]) -> dict[str, str]:
     bookdata = {}
     for file in files:
+        upload = {}
         if file.endswith(".json"):
             jsonData: dict = json.load(
                 open(os.path.join(os.getcwd(), "uploadbooks", "temp", file)))
-            
-            bookdata["genre"] = jsonData.get("genre", "")
+
             bookdata["title"] = jsonData.get("title", "")
             bookdata["summary"] = jsonData.get("summary", "")
             bookdata["totalChapters"] = jsonData.get("totalChapters", 0)
+
+            bookdata["genre"] = [i.strip() for i in jsonData.get("genre", [])]
 
         elif file.endswith(".pdf"):
             file_path = os.path.join(os.getcwd(), "uploadbooks", "temp", file)
             upload: dict = cloudinary.uploader.upload(
                 file=file_path, folder="aibooks/books", overwrite=False)
-            
-            bookdata["pdfUrl"] = upload.get("secure_url", upload.get("url", ""))
+
+            bookdata["pdfUrl"] = upload.get(
+                "secure_url", upload.get("url", ""))
             bookdata["pdfPublicId"] = upload.get("public_id", "")
 
         elif file.endswith(".jpg"):
             file_path = os.path.join(os.getcwd(), "uploadbooks", "temp", file)
             upload: dict = cloudinary.uploader.upload(
                 file=file_path, folder="aibooks/covers", overwrite=False)
-            
-            bookdata["coverImageUrl"] = upload.get("secure_url", upload.get("url", ""))
+
+            bookdata["coverImageUrl"] = upload.get(
+                "secure_url", upload.get("url", ""))
             bookdata["coverImagePublicId"] = upload.get("public_id", "")
 
+        deleteFile(os.path.join(os.getcwd(), "uploadbooks", "temp", file))
+
     return bookdata
+
 
 def getAllFilesInOutputFolder() -> list[str]:
     files = []
@@ -134,19 +95,31 @@ def getAllFilesInOutputFolder() -> list[str]:
             files.append(os.path.join(root, filename))
     return files
 
-def deleteZipFile(path):
-    os.remove(path)
+
+def deleteFile(path):
+    if os.path.exists(path):
+        os.remove(path)
+
 
 def doTheThing():
     zipFiles = getAllFilesInOutputFolder()
-    for file in zipFiles:
-        extractFiles = unzip(file)
-        bookdata = parseAndUploadFiles(extractFiles)
-        addBookData(bookdata)
-        print("Uploaded book zip:", file)
-        deleteZipFile(file)
+    bookDataJsonDocs = []
+    try:
+        for file in zipFiles:
+            extractFiles = unzip(file)
+            bookdata = parseAndUploadFiles(extractFiles)
+            bookDataJsonDocs.append(bookdata)
+            print("Uploaded book zip:", file)
+            deleteFile(file)
+
+        addBookDataJsonDocsMany(bookDataJsonDocs)
+    except Exception as e:
+        with open("bookDataCatch.json", "w") as f:
+            json.dump(bookDataJsonDocs, f)
+
+        print(e)
+
 
 # endregion
 
 doTheThing()
-mydb.close()

@@ -28,7 +28,7 @@ class Utils:
         """
         jsonStr = text.strip().removeprefix(
             "```json").removesuffix("```")
-        jsonStr = re.sub(r'\\[nrtbfv\'"\\]', ' ', jsonStr)
+        jsonStr = re.sub(r'\\[nrtbfv\'"\\]', '', jsonStr)
         return dict(json.loads(jsonStr))
 
     def logger(self, message: str, file: str = "log.txt") -> None:
@@ -44,15 +44,14 @@ class Utils:
         """
         try:
             self.bookSummary = book["bookSummary"]
-            bookCoverImg = self.generateCoverImage(self.bookSummary)
-            try:
-                self.cover_img_url = bookCoverImg["data"][0]["asset_url"]
-            except IndexError:
-                self.cover_img_url = None
-
-            book["bookCoverImg"] = bookCoverImg
+            if self.generateCoverImageLimewire(self.bookSummary):
+                book["bookCoverImg"] = "http://localhost:5000/static/images/cover.jpg"
+            else:
+                book["bookCoverImg"] = "http://localhost:5000/static/images/default.jpg"
         except APIError as e:
-            book["bookCoverImg"] = None
+            book["bookCoverImg"] = "http://localhost:5000/static/images/default.jpg"
+
+        self.cover_img_url = book["bookCoverImg"]
 
         template_dir = os.path.join(os.path.dirname(__file__), 'templates')
         env = Environment(loader=FileSystemLoader(template_dir))
@@ -113,12 +112,10 @@ class Utils:
             # if os.path.exists(pdf_file_path):
             # os.remove(pdf_file_path)
 
-        self.createZipFile(book_summary=self.bookSummary, pdf_bytes=pdf_bytes,
-                           cover_img_url=self.cover_img_url, filename=f"{time.time()}.zip")
-
+        self.createZipFile(pdf_bytes=pdf_bytes, filename=f"{time.time()}.zip")
         return file_name, pdf_bytes
 
-    def generateCoverImage(self, bookSummary: dict):
+    def generateCoverImageLimewire(self, bookSummary: dict) -> bool:
         url = "https://api.limewire.com/api/image/generation"
 
         summary = bookSummary["summary"]
@@ -128,7 +125,7 @@ class Utils:
         prompt = f"""{{ "title" : {bookSummary["title"]}, "summary" : {summary} }}"""
 
         payload = {
-            "prompt": f"""generate cover image for book, don't put any text, here is the json of the book summary {prompt}""",
+            "prompt": f"""generate cover image for book, there is the json of the book summary {prompt}""",
             "negative_prompt": "if prompt is not clear or contains NSFW content generate a fake image, no text in the image",
             "samples": 1,
             "quality": "LOW",
@@ -159,12 +156,18 @@ class Utils:
                 continue
 
             if response.status_code == 200 or data["status"] == "COMPLETED":
-                return data
+                imgUrl = data["data"][0]["asset_url"]
+                imgBuffer = self.getImageFromUrlAndCompress(imgUrl)
+                with open(os.path.join(os.getcwd(), "static", "images", "cover.jpg"), "wb") as f:
+                    f.write(imgBuffer)
+                return True
             else:
                 self.logger(f"{data}")
-                raise APIError(data['detail'], data['status'])
+                return False
 
-    def createZipFile(self, book_summary: dict, pdf_bytes: bytes, cover_img_url: str, filename: str) -> str:
+        return False
+
+    def createZipFile(self, pdf_bytes: bytes, filename: str) -> str:
         """
         Creates a zip file of the generated book summary and pdf.
         """
@@ -174,26 +177,37 @@ class Utils:
             os.makedirs(path)
 
         with zipfile.ZipFile(f"{path}/{filename}", 'w') as zip_file:
-            zip_file.writestr(f'{filename}_metadata.json', json.dumps(book_summary))
+            zip_file.writestr(f'{filename}_metadata.json',
+                              json.dumps(self.bookSummary))
             zip_file.writestr(f'{filename}_book.pdf', pdf_bytes)
 
-            if cover_img_url:
-                imgBytes = self.getImageFromUrlAndCompress(cover_img_url, reduction=0.6)
-                zip_file.writestr(f'{filename}_cover.jpg', imgBytes)
+            if self.cover_img_url.find("cover.jpg") > -1:
+                with open(os.path.join(os.getcwd(), "static", "images", "cover.jpg"), "rb") as f:
+                    imgBytes = f.read()
+                    zip_file.writestr(f'{filename}_cover.jpg', imgBytes)
+            elif self.cover_img_url.find("default.jpg") > -1:
+                with open(os.path.join(os.getcwd(), "static", "images", "default.jpg"), "rb") as f:
+                    imgBytes = f.read()
+                    zip_file.writestr(f'{filename}_cover.jpg', imgBytes)
 
         return filename
-    
-    def getImageFromUrlAndCompress(self, img_url: str, reduction: float = 0.5) -> bytes:
-        response = requests.get(img_url)
-        if response.status_code != 200:
-            raise APIError("Failed to download image", response.status_code)
-        
-        image = Image.open(BytesIO(response.content))
-        width, height = image.size
-        new_width = int(width * (1 - reduction))
-        new_height = int(height * (1 - reduction))
-        resized_image = image.resize((new_width, new_height))
 
-        img_bytes = BytesIO()
-        resized_image.save(img_bytes, format='JPEG')
-        return img_bytes
+    def getImageFromUrlAndCompress(self, img_url: str, reduction: float = 0.5) -> str:
+        try:
+            response = requests.get(img_url)
+            if response.status_code != 200:
+                raise APIError("Failed to download image",
+                               response.status_code)
+
+            image = Image.open(BytesIO(response.content))
+            width, height = image.size
+            new_width = int(width * (1 - reduction))
+            new_height = int(height * (1 - reduction))
+            resized_image = image.resize((new_width, new_height))
+
+            buffered = BytesIO()
+            resized_image.save(buffered, format="JPEG")
+            img_bytes = buffered.getvalue()
+            return img_bytes
+        except Exception as e:
+            raise APIError("shit happened in getImageFromUrlAndCompress", 500)

@@ -164,6 +164,7 @@ output/*
 
 # upload book
 uploadbooks/temp/*
+bookDataCatch.json
 uploadlogs.txt
 
 # react ui
