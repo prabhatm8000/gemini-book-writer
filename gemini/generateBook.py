@@ -123,22 +123,36 @@ class GenerateBookWithParams:
         
         self.checkParams()
 
+        retryCount = 0
+        lastError = None
+        while True:
+            try:
+                response = self.chat.send_message(f"""
+                    {{
+                        "title": "{self.title}",
+                        "description": "{self.description}",
+                        "genre": "{self.genre}",
+                        "style": {self.style},
+                        "chapters": {self.chapters},
+                        "creativity": {self.creativity}/10,
+                        "logic": {self.logic}/10,
+                        "lastError": "{lastError}"
+                    }}
+                """)
 
-        response = self.chat.send_message(f"""
-            {{
-                "title": "{self.title}",
-                "description": "{self.description}",
-                "genre": "{self.genre}",
-                "style": {self.style},
-                "chapters": {self.chapters},
-                "creativity": {self.creativity}/10,
-                "logic": {self.logic}/10,
-            }}
-        """)
+                self.bookSummary = utils.geminiResponseToJson(response.text)
+                self.bookSummary["genre"] = self.genre.split(",")
+                return self.bookSummary
+            except Exception as e:
+                error = e.__class__.__name__ + ": " + e.__str__() + "on generating book summary"
+                utils.logger(error)
+                lastError = error
+                retryCount += 1
+                time.sleep(1)
 
-        self.bookSummary = utils.geminiResponseToJson(response.text)
-        self.bookSummary["genre"] = self.genre.split(",")
-        return self.bookSummary
+                if (retryCount == 3):
+                    utils.logger("Failed to generate book summary")
+                    raise e
 
     def generateChapter(self, chapterNo: int, estimatedParagraph: int = 3, paragraphSize: str = "long") -> dict:
         """
@@ -217,8 +231,6 @@ class GenerateBookWithParams:
             bookContent["bookContent"].append(chapter)
 
             yield chapter
-
-        # return bookContent
 
 
 # if __name__ == "__main__":

@@ -50,24 +50,40 @@ const Content = () => {
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
         let { done, value } = await reader.read();
+        let accumulator = "";
 
         while (!done) {
             const chunkText = decoder.decode(value, { stream: true });
-            console.log(chunkText);
-            
-            try {
+            accumulator += chunkText;
+
+            if (chunkText.startsWith(`{"error":`)) {
                 const jsonData = JSON.parse(chunkText);
-                if (jsonData?.error) {
-                    dispatch({ type: 'seterror', payload: jsonData });
-                    break;
-                }
-                dispatch({ type: 'appendChapter', payload: jsonData });
-            } catch (e) {
-                console.error('Failed to parse JSON:', e);
+                dispatch({ type: 'seterror', payload: jsonData });
+                console.log(jsonData);
+                break;
             }
 
+            if (!accumulator.includes(`"]}`)) {
+                ({ done, value } = await reader.read());
+                continue;
+            }
+
+            const texts = accumulator.split(`"]}`);
+            const textToParse = texts[0] + `"]}`;
+            accumulator = texts[1];
+
+            try {
+                const jsonData = JSON.parse(textToParse);
+                dispatch({ type: 'appendChapter', payload: jsonData });
+            } catch (e) {
+                console.error('Failed to parse JSON:');
+                dispatch({ type: 'setpollChapter', payload: false });
+                dispatch({ type: 'setGlobalLoading', payload: false });
+            }
             ({ done, value } = await reader.read());
         }
+
+        dispatch({ type: 'seterror', payload: null });
         dispatch({ type: 'setpollChapter', payload: false });
         dispatch({ type: 'setGlobalLoading', payload: false });
     }

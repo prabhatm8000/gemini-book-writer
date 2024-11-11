@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const Output = ({ selector, dispatch }) => {
     const [view, setView] = useState("book")
@@ -18,25 +18,26 @@ const Output = ({ selector, dispatch }) => {
         }
 
         setGettingPdf(true)
-        try {   
+        try {
             const res = await fetch("http://localhost:5000/api/generate-pdf", {
                 method: "GET",
             })
 
             if (!res.ok) {
+                setGettingPdf(false)
                 setError("Something went wrong")
                 return
             }
-    
+
             const blob = await res.blob(); // Get the PDF as a Blob
             const url = window.URL.createObjectURL(blob); // Create a URL for the Blob
             const a = document.createElement('a'); // Create a link element
             a.href = url;
-    
+
             // Use the `Content-Disposition` header to determine the filename
             const contentDisposition = res.headers.get('content-disposition');
             let fileName = 'output.pdf'; // Default filename
-    
+
             if (contentDisposition && contentDisposition.includes('filename=')) {
                 const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
                 const matches = filenameRegex.exec(contentDisposition);
@@ -44,7 +45,7 @@ const Output = ({ selector, dispatch }) => {
                     fileName = matches[1].replace(/['"]/g, '');
                 }
             }
-    
+
             a.download = fileName;
             document.body.appendChild(a);
             a.click();
@@ -78,7 +79,10 @@ const Output = ({ selector, dispatch }) => {
                 bookContent: selector?.chapters
             })
         })
-        setGettingHtml(false)
+
+        if (!res.ok) {
+            setGettingHtml(false)
+        }
 
         const html = await res.text()
         setHtmlContent(html)
@@ -110,6 +114,14 @@ const Output = ({ selector, dispatch }) => {
         setView("html")
         getHTML()
     }
+
+    // auto scroll to bottom
+    useEffect(() => {
+        const ele = document.getElementById('output')
+        if (ele && view === "book") {
+            ele.scrollTo(0, ele.scrollHeight);
+        }
+    }, [view, selector?.chapters]);
 
     return (
         <div className="content-container" id="output-container">

@@ -6,3 +6,6 @@ flask[async]
 Flask-Cors
 asyncio
 selenium
+cloudinary
+pillow
+pymongo[srv]

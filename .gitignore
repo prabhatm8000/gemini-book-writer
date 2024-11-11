@@ -162,6 +162,11 @@ output2.json
 #output
 output/*
 
+# upload book
+uploadbooks/temp/*
+bookDataCatch.json
+uploadlogs.txt
+
 # react ui
 # Logs
 logs
