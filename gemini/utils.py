@@ -47,9 +47,9 @@ class Utils:
             if self.generateCoverImageLimewire(self.bookSummary):
                 book["bookCoverImg"] = "http://localhost:5000/static/images/cover.jpg"
             else:
-                book["bookCoverImg"] = "http://localhost:5000/static/images/default.jpg"
+                book["bookCoverImg"] = "https://res.cloudinary.com/dtapvbbzb/image/upload/v1730986074/aibooks/covers/ilkmj3sgqqx6ker4u6kz.jpg"
         except APIError as e:
-            book["bookCoverImg"] = "http://localhost:5000/static/images/default.jpg"
+            book["bookCoverImg"] = "https://res.cloudinary.com/dtapvbbzb/image/upload/v1730986074/aibooks/covers/ilkmj3sgqqx6ker4u6kz.jpg"
 
         self.cover_img_url = book["bookCoverImg"]
 
@@ -183,10 +183,6 @@ class Utils:
 
             if self.cover_img_url.find("cover.jpg") > -1:
                 with open(os.path.join(os.getcwd(), "static", "images", "cover.jpg"), "rb") as f:
-                    imgBytes = f.read()
-                    zip_file.writestr(f'{filename}_cover.jpg', imgBytes)
-            elif self.cover_img_url.find("default.jpg") > -1:
-                with open(os.path.join(os.getcwd(), "static", "images", "default.jpg"), "rb") as f:
                     imgBytes = f.read()
                     zip_file.writestr(f'{filename}_cover.jpg', imgBytes)
 

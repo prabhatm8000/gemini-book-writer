@@ -84,6 +84,10 @@ def parseAndUploadFiles(files: list[str]) -> dict[str, str]:
             bookdata["coverImagePublicId"] = upload.get("public_id", "")
 
         deleteFile(os.path.join(os.getcwd(), "uploadbooks", "temp", file))
+    
+    if bookdata.get("coverImageUrl", "") == "":
+        bookdata["coverImageUrl"] = "https://res.cloudinary.com/dtapvbbzb/image/upload/v1730986074/aibooks/covers/ilkmj3sgqqx6ker4u6kz.jpg"
+        bookdata["coverImagePublicId"] = "aibooks/covers/ilkmj3sgqqx6ker4u6kz"
 
     return bookdata
 
